@@ -29,15 +29,6 @@ library(tinytex)
 
 NHIS_Diabetes_Eye <- read_csv("adult22.csv")
 
-vars_names <- colnames(NHIS_Diabetes_Eye)
-
-#checking if variables of interest is actually in the dataset! 
-#"REGION" %in% vars_names
-
-#if seeing the following error: Error in select(., REGION) : unused argument (REGION)
-#then you need to specify the dplyr package in front of the command
-
-
 ```
 
 # Descriptive Statistics 
@@ -247,6 +238,7 @@ num_diabetes %>%
        y = "Count")
 
 ```
+\newpage 
 
 # Exploratory Analysis 
 
@@ -359,7 +351,13 @@ NHIS_Diabetes_Eye %>%
 ```
 
 
-### 3) Proportion of respondents who got an Eye Exam based on Diabetes type
+\newpage 
+
+# Latest Findings 
+
+## 1) Looking at differences in responses based on type of diabetes 
+
+### a) Proportion of respondents who got an Eye Exam based on Diabetes type
 
 ```{r, message = FALSE, warning = FALSE}
 
@@ -417,4 +415,393 @@ NHIS_Diabetes_Eye %>%
 
 ```
 
+## 2) Looking at differences in responses based on respondents' sex
+
+### a) Number of respondents that have diabetes across the sexes 
+
+```{r, message = FALSE, warning = FALSE}
+
+diabetes_sex_tbl <- NHIS_Diabetes_Eye %>%
+  dplyr::mutate(SEX_A = case_when(SEX_A == 1 ~ "Male",
+                                       SEX_A == 2 ~ "Female",
+                                       SEX_A == 7 ~ "Refused", 
+                                       SEX_A == 8 ~ "Not Ascertained",
+                                       SEX_A == 9 ~ "Don't Know")) %>%
+  dplyr::mutate(DIBEV_A = case_when(DIBEV_A == 1 ~ "Yes",
+                                      DIBEV_A == 2 ~ "No",
+                                      DIBEV_A == 7 ~ "Refused", 
+                                      DIBEV_A == 8 ~ "Not Ascertained",
+                                      DIBEV_A == 9 ~ "Don't Know")) %>%
+  filter(DIBEV_A %in% c("Yes", "No"), 
+         SEX_A %in% c("Male", "Female")) %>%
+  dplyr::group_by(DIBEV_A) %>%
+  dplyr::count(SEX_A) %>%
+  dplyr::mutate(perc_diabetes = (n/sum(n)*100)) %>%
+  rename(Respondent_Sex = SEX_A,
+         Respondent_Diabetes = DIBEV_A)
+
+kable(diabetes_sex_tbl)
+
+diabetes_sex_tbl %>%
+  ggplot(aes(x = reorder(Respondent_Diabetes, -n), y = n, fill = Respondent_Sex)) + 
+  geom_col(position = "fill") + 
+  scale_fill_manual(values = c("coral3", 
+                               "cornflowerblue")) +
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  theme_light() +
+  theme(text = element_text(size = 10), 
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title="Number of respondents that have diabetes across the sexes",
+       x ="Does the respondent have diabetes?", 
+       y = "Proportion")
+
+
+
+diabetes_sex_tbl %>%
+  ggplot(aes(x = reorder(Respondent_Diabetes, -n), y = n, fill = Respondent_Sex)) + 
+  geom_col(position = "dodge2") + 
+  scale_fill_manual(values = c("coral3", 
+                               "cornflowerblue")) +
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  theme_light() +
+  theme(text = element_text(size = 10), 
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title="Number of respondents that have diabetes across the sexes",
+       x ="Does the respondent have diabetes?", 
+       y = "Count")
+
+
+```
+
+### b) Number of respondents with diabetes that took an eye exam across the sexes
+
+```{r}
+
+eye_exam_sex_tbl <- NHIS_Diabetes_Eye %>%
+  dplyr::mutate(SEX_A = case_when(SEX_A == 1 ~ "Male",
+                                       SEX_A == 2 ~ "Female",
+                                       SEX_A == 7 ~ "Refused", 
+                                       SEX_A == 8 ~ "Not Ascertained",
+                                       SEX_A == 9 ~ "Don't Know")) %>%
+  dplyr::mutate(DIBEV_A = case_when(DIBEV_A == 1 ~ "Yes",
+                                      DIBEV_A == 2 ~ "No",
+                                      DIBEV_A == 7 ~ "Refused", 
+                                      DIBEV_A == 8 ~ "Not Ascertained",
+                                      DIBEV_A == 9 ~ "Don't Know")) %>%
+  dplyr::mutate(EYEEX12M_A =case_when (EYEEX12M_A == 1 ~"Yes",
+                                       EYEEX12M_A == 2 ~"No",
+                                       EYEEX12M_A == 7 ~"Refused",
+                                       EYEEX12M_A == 8 ~"Not Ascertained",
+                                       EYEEX12M_A == 9~"Don't Know")) %>%
+  filter(DIBEV_A %in% c("Yes"), 
+         SEX_A %in% c("Male", "Female"),
+         EYEEX12M_A%in% c("Yes", "No")) %>%
+  dplyr::group_by(EYEEX12M_A) %>%
+  dplyr::count(SEX_A) %>%
+  dplyr::mutate(perc_eye_exam = (n/sum(n)*100)) %>%
+  rename(Respondent_Sex = SEX_A,
+         Eye_Exam = EYEEX12M_A)
+
+knitr::kable(eye_exam_sex_tbl)
+
+eye_exam_sex_tbl %>%
+  ggplot(aes(x = reorder(Eye_Exam, -n), y = n, fill = Respondent_Sex)) + 
+  geom_col(position = "fill") + 
+  scale_fill_manual(values = c("coral3", 
+                               "cornflowerblue")) +
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  theme_light() +
+  theme(text = element_text(size = 10), 
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Number of respondents with diabetes that took an eye exam across the sexes",
+       x ="Did the respondent take an eye exam?", 
+       y = "Proportion")
+
+eye_exam_sex_tbl %>%
+  ggplot(aes(x = reorder(Eye_Exam, -n), y = n, fill = Respondent_Sex)) + 
+  geom_col(position = "dodge2") + 
+  scale_fill_manual(values = c("coral3", 
+                               "cornflowerblue")) +
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  theme_light() +
+  theme(text = element_text(size = 10), 
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Number of respondents with diabetes that took an eye exam across the sexes",
+       x ="Did the respondent take an eye exam?", 
+       y = "Count")
+
+```
+
+
+## 3) Looking at differences in responses based on respondents' race 
+
+### a) Number of respondents that have diabetes across races
+
+```{r, message = FALSE, warning = FALSE}
+
+diabetes_race_tbl <- NHIS_Diabetes_Eye %>%
+  dplyr::mutate(HISPALLP_A = case_when(HISPALLP_A == 1 ~ "Hispanic",
+                                       HISPALLP_A == 2 ~ "White only",
+                                       HISPALLP_A == 3 ~ "Black/African American only", 
+                                       HISPALLP_A == 4 ~ "Asian only",
+                                       HISPALLP_A == 5 ~ "AIAN only",
+                                       HISPALLP_A == 6 ~ "AIAN and any other group",
+                                       HISPALLP_A == 7 ~ "Other single and multiple races",
+                                       HISPALLP_A == 97 ~ "Refused",
+                                       HISPALLP_A == 98 ~ "Not Ascertained",
+                                       HISPALLP_A == 99 ~ "Don't Know")) %>%
+  dplyr::mutate(DIBEV_A = case_when(DIBEV_A == 1 ~ "Yes",
+                                      DIBEV_A == 2 ~ "No",
+                                      DIBEV_A == 7 ~ "Refused", 
+                                      DIBEV_A == 8 ~ "Not Ascertained",
+                                      DIBEV_A == 9 ~ "Don't Know")) %>%
+  filter(DIBEV_A %in% c("Yes", "No"), 
+         HISPALLP_A %in% c("Hispanic", "White only", "Black/African American only",
+                      "Asian only", "AIAN only", "AIAN and any other group",
+                      "Other single and multiple races")) %>%
+  dplyr::group_by(DIBEV_A) %>%
+  dplyr::count(HISPALLP_A) %>%
+  dplyr::mutate(perc_diabetes = (n/sum(n)*100)) %>%
+  rename(Respondent_Race = HISPALLP_A,
+         Respondent_Diabetes = DIBEV_A)
+
+kable(diabetes_race_tbl)
+
+diabetes_race_tbl %>%
+  ggplot(aes(x = reorder(Respondent_Diabetes, -n), y = n, fill = Respondent_Race)) + 
+  geom_col(position = "fill") + 
+  scale_fill_brewer(palette = "Paired") + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  theme_light() +
+  theme(text = element_text(size = 10), 
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title="Number of respondents that have diabetes across the races",
+       x ="Does the respondent have diabetes?", 
+       y = "Proportion")
+
+diabetes_race_tbl %>%
+  ggplot(aes(x = reorder(Respondent_Diabetes, +n), y = n, fill = Respondent_Race)) + 
+  geom_col(position = "dodge2") + 
+  scale_fill_brewer(palette = "Paired") + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  theme_light() +
+  theme(text = element_text(size = 10), 
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title="Number of respondents that have diabetes across the races",
+       x ="Does the respondent have diabetes?", 
+       y = "Count")
+
+```
+
+### b) Number of respondents with diabetes that took an eye exam across races
+
+```{r}
+
+
+eye_exam_race_tbl <- NHIS_Diabetes_Eye %>%
+  dplyr::mutate(HISPALLP_A = case_when(HISPALLP_A == 1 ~ "Hispanic",
+                                       HISPALLP_A == 2 ~ "White only",
+                                       HISPALLP_A == 3 ~ "Black/African American only", 
+                                       HISPALLP_A == 4 ~ "Asian only",
+                                       HISPALLP_A == 5 ~ "AIAN only",
+                                       HISPALLP_A == 6 ~ "AIAN and any other group",
+                                       HISPALLP_A == 7 ~ "Other single and multiple races",
+                                       HISPALLP_A == 97 ~ "Refused",
+                                       HISPALLP_A == 98 ~ "Not Ascertained",
+                                       HISPALLP_A == 99 ~ "Don't Know")) %>%
+  dplyr::mutate(DIBEV_A = case_when(DIBEV_A == 1 ~ "Yes",
+                                      DIBEV_A == 2 ~ "No",
+                                      DIBEV_A == 7 ~ "Refused", 
+                                      DIBEV_A == 8 ~ "Not Ascertained",
+                                      DIBEV_A == 9 ~ "Don't Know")) %>%
+  dplyr::mutate(EYEEX12M_A =case_when (EYEEX12M_A == 1 ~"Yes",
+                                       EYEEX12M_A == 2 ~"No",
+                                       EYEEX12M_A == 7 ~"Refused",
+                                       EYEEX12M_A == 8 ~"Not Ascertained",
+                                       EYEEX12M_A == 9~"Don't Know")) %>%
+  filter(DIBEV_A %in% c("Yes"), 
+         HISPALLP_A %in% c("Hispanic", "White only", "Black/African American only",
+                           "Asian only", "AIAN only", "AIAN and any other group",
+                           "Other single and multiple races"),
+         EYEEX12M_A%in% c("Yes", "No")) %>%
+  dplyr::group_by(EYEEX12M_A) %>%
+  dplyr::count(HISPALLP_A) %>%
+  dplyr::mutate(perc_eye_exam = (n/sum(n)*100)) %>%
+  rename(Respondent_Race = HISPALLP_A,
+         Eye_Exam = EYEEX12M_A)
+
+knitr::kable(eye_exam_race_tbl)
+
+eye_exam_race_tbl %>%
+  ggplot(aes(x = reorder(Respondent_Race, -n), y = n, fill = Eye_Exam)) + 
+  geom_col(position = "fill") + 
+  scale_fill_manual(values = c("coral3", 
+                               "cornflowerblue")) +
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  theme_light() +
+  theme(text = element_text(size = 10), 
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Number of respondents with diabetes that took an eye exam across the races",
+       x ="Did the respondent take an eye exam?", 
+       y = "Proportion")
+
+eye_exam_race_tbl %>%
+  ggplot(aes(x = reorder(Respondent_Race, -n), y = n, fill = Eye_Exam)) + 
+  geom_col(position = "dodge2") + 
+  scale_fill_manual(values = c("coral3", 
+                               "cornflowerblue")) +
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  theme_light() +
+  theme(text = element_text(size = 10), 
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Number of respondents with diabetes that took an eye exam across the races",
+       x ="Did the respondent take an eye exam?", 
+       y = "Count")
+
+```
+
+## 4) Looking at differences in responses based on respondents' county 
+
+### a) Number of respondents that have diabetes across county types 
+
+```{r, message = FALSE, warning = FALSE}
+
+diabetes_county_tbl<- NHIS_Diabetes_Eye %>%
+  dplyr::mutate(URBRRL = case_when(URBRRL == 1 ~ "Large central metro",
+                                       URBRRL == 2 ~ "Large fringe metro",
+                                       URBRRL == 3 ~ "Medium and small metro", 
+                                       URBRRL == 4 ~ "Nonmetropolitan")) %>%
+  dplyr::mutate(DIBEV_A = case_when(DIBEV_A == 1 ~ "Yes",
+                                      DIBEV_A == 2 ~ "No",
+                                      DIBEV_A == 7 ~ "Refused", 
+                                      DIBEV_A == 8 ~ "Not Ascertained",
+                                      DIBEV_A == 9 ~ "Don't Know")) %>%
+  filter(DIBEV_A %in% c("Yes", "No")) %>%
+  dplyr::group_by(DIBEV_A) %>%
+  dplyr::count(URBRRL) %>%
+  dplyr::mutate(perc_diabetes = (n/sum(n)*100)) %>%
+  rename(Respondent_County = URBRRL,
+         Respondent_Diabetes = DIBEV_A)
+
+kable(diabetes_county_tbl)
+
+diabetes_county_tbl %>%
+  ggplot(aes(x = reorder(Respondent_Diabetes, -n), y = n, fill = Respondent_County)) + 
+  geom_col(position = "fill") + 
+  scale_fill_brewer(palette = "Paired") + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  theme_light() +
+  theme(text = element_text(size = 10), 
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title="Number of respondents that have diabetes across the counties",
+       x ="Does the respondent have diabetes?", 
+       y = "Count")
+
+diabetes_county_tbl %>%
+  ggplot(aes(x = reorder(Respondent_Diabetes, +n), y = n, fill = Respondent_County)) + 
+  geom_col(position = "dodge2") + 
+  scale_fill_brewer(palette = "Paired") + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  theme_light() +
+  theme(text = element_text(size = 10), 
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title="Number of respondents that have diabetes across the counties",
+       x ="Does the respondent have diabetes?", 
+       y = "Count")
+
+```
+
+### b) Number of respondents with diabetes that took an eye exam across county types 
+
+```{r}
+
+
+eye_exam_race_tbl <- NHIS_Diabetes_Eye %>%
+  dplyr::mutate(URBRRL = case_when(URBRRL == 1 ~ "Large central metro",
+                                   URBRRL == 2 ~ "Large fringe metro",
+                                   URBRRL == 3 ~ "Medium and small metro", 
+                                   URBRRL == 4 ~ "Nonmetropolitan")) %>%
+  dplyr::mutate(DIBEV_A = case_when(DIBEV_A == 1 ~ "Yes",
+                                      DIBEV_A == 2 ~ "No",
+                                      DIBEV_A == 7 ~ "Refused", 
+                                      DIBEV_A == 8 ~ "Not Ascertained",
+                                      DIBEV_A == 9 ~ "Don't Know")) %>%
+  dplyr::mutate(EYEEX12M_A =case_when (EYEEX12M_A == 1 ~"Yes",
+                                       EYEEX12M_A == 2 ~"No",
+                                       EYEEX12M_A == 7 ~"Refused",
+                                       EYEEX12M_A == 8 ~"Not Ascertained",
+                                       EYEEX12M_A == 9~"Don't Know")) %>%
+  filter(DIBEV_A %in% c("Yes"),
+         EYEEX12M_A%in% c("Yes", "No")) %>%
+  dplyr::group_by(EYEEX12M_A) %>%
+  dplyr::count(URBRRL) %>%
+  dplyr::mutate(perc_eye_exam = (n/sum(n)*100)) %>%
+  rename(Respondent_County = URBRRL,
+         Eye_Exam = EYEEX12M_A)
+
+knitr::kable(eye_exam_race_tbl)
+
+eye_exam_race_tbl %>%
+  ggplot(aes(x = reorder(Respondent_County, -n), y = n, fill = Eye_Exam)) + 
+  geom_col(position = "fill") + 
+  scale_fill_manual(values = c("coral3", 
+                               "cornflowerblue")) +
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  theme_light() +
+  theme(text = element_text(size = 10), 
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Number of respondents with diabetes that took an eye exam across the counties",
+       x ="Did the respondent take an eye exam?", 
+       y = "Proportion")
+
+eye_exam_race_tbl %>%
+  ggplot(aes(x = reorder(Respondent_County, -n), y = n, fill = Eye_Exam)) + 
+  geom_col(position = "dodge2") + 
+  scale_fill_manual(values = c("coral3", 
+                               "cornflowerblue")) +
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + 
+  theme(text = element_text(size = 8), 
+				axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  theme_light() +
+  theme(text = element_text(size = 10), 
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Number of respondents with diabetes that took an eye exam across the counties",
+       x ="Did the respondent take an eye exam?", 
+       y = "Count")
+
+```
 
